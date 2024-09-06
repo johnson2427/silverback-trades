@@ -1,0 +1,4 @@
+name: trades
+
+ethereum:
+  default_network: sepolia
