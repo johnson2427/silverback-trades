@@ -1,4 +1,7 @@
 name: trades
 
 ethereum:
-  default_network: sepolia
+  default_network: mainnet
+
+plugins:
+  - name: vyper
