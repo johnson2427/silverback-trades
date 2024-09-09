@@ -1,0 +1,9 @@
+name: trades
+
+node:
+  ethereum:
+    sepolia:
+      uri: https://rpc.sepolia.org/
+
+plugins:
+  - name: vyper
