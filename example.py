@@ -2,19 +2,38 @@ import websocket
 import json
 
 from collections import deque
+from datetime import datetime
 
 
 prices_50 = deque(maxlen=50)
 
 
-def calculate_moving_average(prices, ma_size):
-    if len(prices) != ma_size:
+def calculate_time_weighted_moving_average(prices):
+    if len(prices) < 2:
         return None
-    return sum(prices) / ma_size
+
+    total_weighted_price = 0
+    total_time_delta = 0
+
+    for i in range(1, len(prices)):
+        price_i, time_i = prices[i]
+        price_prev, time_prev = prices[i - 1]
+
+        # Time difference (in seconds) between the two prices
+        time_diff = (time_i - time_prev).total_seconds()
+
+        # Area under the curve for each step
+        total_weighted_price += ((price_prev + price_i) / 2) * (time_diff) 
+
+        # Total time passed between points
+        total_time_delta += time_diff
+
+    return total_weighted_price / total_time_delta
 
 
 # WebSocket message handler
 def on_message(ws, message):
+    current_time = datetime.now()
     data = json.loads(message)
 
     # Check if the message contains ticker data (ignore system messages like subscription status)
@@ -26,16 +45,16 @@ def on_message(ws, message):
         eth_price = ticker_data.get('c', [None])[0]  # 'c' is the last trade price
         if eth_price:
             eth_price = float(eth_price)
-            print(f"Real-time ETH price: ${eth_price:.2f}")
+            print(f"Real-time ETH price: ${eth_price:.2f} at {current_time}")
 
             # Add the price to the deque for 50 MA calculation
-            prices_50.append(eth_price)
+            prices_50.append((eth_price, current_time))
 
             # Calculate the 50-period moving average
-            ma_50 = calculate_moving_average(prices_50, 50)
+            ma_50 = calculate_time_weighted_moving_average(prices_50)
 
             # Print the 50-period moving average if there are enough prices
-            if len(prices_50) == 50:
+            if ma_50:
                 print(f"50-period Moving Average: ${ma_50:.2f}")
 
 
